@@ -10,4 +10,7 @@ Projeto desenvolvido 100% por mim para a criação de portifolio demonstrando o 
 
 Um agradecimento em especial aos professores e mentores do curso.
 
+Para utilizar é necessário baixar o conteúdo do repositório e abrir o html. Após isso basta anexar uma imagem de um pneu, automaticamente o modelo já classificará o pneu como OK ou NÃO OK.
+
+
 
