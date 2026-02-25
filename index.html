@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tyre Quality AI - Classifier</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f8fafc;
+            --accent: #334155;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: var(--card);
+            padding: 2rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            width: 450px;
+            text-align: center;
+            border: 1px solid var(--accent);
+        }
+
+        h2 { 
+            margin-top: 0;
+            margin-bottom: 0.5rem; 
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        p.subtitle {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Botão de Upload Customizado */
+        .file-input-wrapper {
+            margin-bottom: 1.5rem;
+        }
+
+        input[type="file"] { display: none; }
+
+        .custom-file-upload {
+            display: block;
+            padding: 14px;
+            cursor: pointer;
+            background: var(--primary);
+            color: white;
+            border-radius: 10px;
+            transition: all 0.2s;
+            font-weight: 600;
+            border: none;
+        }
+
+        .custom-file-upload:hover {
+            background: #4f46e5;
+            transform: translateY(-1px);
+        }
+
+        /* Área de Visualização da Imagem */
+        #image-container {
+            margin: 1rem 0;
+            border: 2px dashed #475569;
+            border-radius: 12px;
+            height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0f172a;
+            overflow: hidden;
+        }
+
+        #selected-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        /* Estilização dos Resultados (Barras) */
+        #label-container {
+            margin-top: 1.5rem;
+            text-align: left;
+        }
+
+        .prediction-bar {
+            margin-bottom: 16px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .label-text {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            gap: 15px; /* Garante espaço entre nome e % */
+        }
+
+        .class-name {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #e2e8f0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .class-prob {
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            color: var(--primary);
+            min-width: 60px;
+            text-align: right;
+        }
+
+        .bar-outer {
+            background: #334155;
+            height: 10px;
+            border-radius: 5px;
+            width: 100%;
+        }
+
+        .bar-inner {
+            background: var(--primary);
+            height: 100%;
+            border-radius: 5px;
+            width: 0%;
+            transition: width 0.6s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+        }
+
+        /* Rodapé de Créditos */
+        .data-source {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid #334155;
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        .data-source a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .data-source a:hover { 
+            text-decoration: underline; 
+        }
+        .model-info {
+            margin-bottom: 1.5rem;
+            padding: 10px;
+            background: rgba(99, 102, 241, 0.1); /* Um leve tom da cor primária */
+            border-radius: 8px;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .model-info h3 {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin: 0 0 5px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .model-link {
+            font-size: 0.9rem;
+            color: var(--primary);
+            text-decoration: none;
+            word-break: break-all; /* Garante que links longos não quebrem o layout */
+            font-weight: 500;
+        }
+
+        .model-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Qualidade de pneus - Exemplo de utilização Teacheble Machine</h2>
+    <h3>Link para o modelo</h3>
+    <a href="https://teachablemachine.withgoogle.com/models/iRWTovrbR/" class="model-link" id="external-model-link">
+        https://teachablemachine.withgoogle.com/models/iRWTovrbR/
+    </a>
+    <p class="subtitle">Classificação de qualidade de pneus</p>
+    
+    <div class="file-input-wrapper">
+        <label for="image-selector" class="custom-file-upload">
+            Selecionar Foto do Pneu
+        </label>
+        <input type="file" id="image-selector" accept="image/*">
+    </div>
+
+    <div id="image-container">
+        <span id="placeholder-text" style="color: #475569;">Aguardando imagem para análise...</span>
+        <img id="selected-image" style="display: none;" />
+    </div>
+
+    <div id="label-container">
+        </div>
+
+    <div class="data-source">
+        ⚙️ Treinado com dados de: <br>
+        <a href="https://www.kaggle.com/datasets/warcoder/tyre-quality-classification" id="kaggle-link">
+            Tyre Quality Classification (Kaggle)
+        </a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+
+<script type="text/javascript">
+    const URL = "https://teachablemachine.withgoogle.com/models/iRWTovrbR/";
+    let model, labelContainer, maxPredictions;
+
+    async function init() {
+        try {
+            // Carrega o modelo e os metadados explicitamente
+            model = await tmImage.load(URL + "model.json", URL + "metadata.json");
+            
+            // Força a leitura das classes dos metadados
+            const classNames = model.getClassLabels();
+            maxPredictions = classNames.length;
+            
+            labelContainer = document.getElementById("label-container");
+            labelContainer.innerHTML = ""; 
+
+            for (let i = 0; i < maxPredictions; i++) {
+                const barWrapper = document.createElement("div");
+                barWrapper.className = "prediction-bar";
+                barWrapper.innerHTML = `
+                    <div class="label-text">
+                        <span class="class-name">${classNames[i]}</span>
+                        <span class="class-prob">0%</span>
+                    </div>
+                    <div class="bar-outer">
+                        <div class="bar-inner"></div>
+                    </div>
+                `;
+                labelContainer.appendChild(barWrapper);
+            }
+            console.log("Modelo carregado com as classes:", classNames);
+        } catch (e) {
+            console.error("Erro ao carregar o modelo:", e);
+        }
+    }
+
+    document.getElementById('image-selector').addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('placeholder-text').style.display = "none";
+            const imgElement = document.getElementById('selected-image');
+            imgElement.src = e.target.result;
+            imgElement.style.display = "block";
+
+            imgElement.onload = async () => {
+                await predict(imgElement);
+            };
+        };
+        reader.readAsDataURL(file);
+    });
+
+    async function predict(imageElement) {
+        if (!model) return;
+        const prediction = await model.predict(imageElement);
+        
+        const bars = document.querySelectorAll('.prediction-bar');
+        const classNames = model.getClassLabels(); // Pega os nomes reais novamente
+
+        for (let i = 0; i < maxPredictions; i++) {
+            const prob = (prediction[i].probability * 100).toFixed(1);
+            
+            // Garante que o nome da classe seja o definido no Teachable Machine
+            bars[i].querySelector('.class-name').innerText = classNames[i];
+            bars[i].querySelector('.class-prob').innerText = prob + "%";
+            bars[i].querySelector('.bar-inner').style.width = prob + "%";
+        }
+    }
+
+    // Suporte para links no Electron
+    if (typeof require !== 'undefined') {
+        try {
+            const { shell } = require('electron');
+            const link = document.getElementById('kaggle-link');
+            if(link) {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    shell.openExternal(link.href);
+                });
+            }
+        } catch (e) { }
+    }
+
+    init();
+</script>
+</body>
+</html>
